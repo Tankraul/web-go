@@ -1,31 +1,25 @@
 pipeline {
     agent { label 'tuto' }
+    
     environment {
         DOCKERHUB_CREDS = credentials('dockerhub-credentials')
     }
+
     stages {
         stage('Build') {
             steps {
                 container('podman') {
-                     script {
+                    script {
                         sh 'podman build -t docker.io/tankraul/web-go:$BUILD_NUMBER -f Dockerfile'
                         sh 'podman login docker.io -u $DOCKERHUB_CREDS_USR -p $DOCKERHUB_CREDS_PSW'
+                        sh 'podman tag docker.io/tankraul/web-go:$BUILD_NUMBER docker.io/nelsonyaccuzzi/web-go:latest'
                         sh 'podman push docker.io/tankraul/web-go:$BUILD_NUMBER'
+                        sh 'podman push docker.io/tankraul/web-go:latest'
                     }
                 }
-                container('kubectl') {
-                    script {
-                        sh 'kubectl version'
-                    }
-                }
-              container('fortune') {
-                    script {
-                        sh 'fortune'
-                    }
-              }
-               
-    }
-        } stage('Deploy') {
+            }
+        }
+        stage('Deploy') {
             steps {
                 container('kubectl') {
                     script {
@@ -36,4 +30,3 @@ pipeline {
         }
     }
 }
-
